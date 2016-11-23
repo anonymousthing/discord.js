@@ -245,6 +245,12 @@ class VoiceConnection extends EventEmitter {
     return this.player.playUnknownStream(stream, options);
   }
 
+  playSharedStream(name, stream, { seek = 0, volume = 1, passes = 1 } = {}) {
+    const options = { seek, volume, passes };
+    let sharedPlayer = this.voiceManager.getSharedStream(name, stream, options);
+    sharedPlayer.addVoiceConnection(this);
+  }
+
   /**
    * Plays a stream of 16-bit signed stereo PCM at 48KHz.
    * @param {ReadableStream} stream The audio stream to play.

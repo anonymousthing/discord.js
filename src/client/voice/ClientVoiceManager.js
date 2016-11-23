@@ -2,6 +2,7 @@ const Collection = require('../../util/Collection');
 const mergeDefault = require('../../util/MergeDefault');
 const Constants = require('../../util/Constants');
 const VoiceConnection = require('./VoiceConnection');
+const SharedAudioPlayer = require('./player/SharedAudioPlayer');
 const EventEmitter = require('events').EventEmitter;
 
 /**
@@ -27,6 +28,8 @@ class ClientVoiceManager {
      * @type {Collection<string, VoiceChannel>}
      */
     this.pending = new Collection();
+
+    this.sharedStreams = new Collection();
 
     this.client.on('self.voiceServer', this.onVoiceServer.bind(this));
     this.client.on('self.voiceStateUpdate', this.onVoiceStateUpdate.bind(this));
@@ -110,6 +113,15 @@ class ClientVoiceManager {
         voiceConnection.once('disconnect', () => this.connections.delete(channel.guild.id));
       });
     });
+  }
+
+  getSharedStream(name, stream, options) {
+    let sharedStream;
+    if (!(sharedStream = this.sharedStreams.get(name))) {
+      sharedStream = new SharedAudioPlayer(this.client, stream, options);
+      this.sharedStreams.set(name, sharedStream);
+    }
+    return sharedStream;
   }
 }
 
