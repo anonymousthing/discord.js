@@ -79,7 +79,7 @@ class ClientVoiceManager {
    * @param {VoiceChannel} channel The voice channel to join
    * @returns {Promise<VoiceConnection>}
    */
-  joinChannel(channel) {
+  joinChannel(channel, options) {
     return new Promise((resolve, reject) => {
       if (this.pending.get(channel.guild.id)) throw new Error('Already connecting to this guild\'s voice server.');
 
@@ -97,7 +97,7 @@ class ClientVoiceManager {
         return;
       }
 
-      const pendingConnection = new PendingVoiceConnection(this, channel);
+      const pendingConnection = new PendingVoiceConnection(this, channel, options);
       this.pending.set(channel.guild.id, pendingConnection);
 
       pendingConnection.on('fail', reason => {
@@ -130,8 +130,10 @@ class ClientVoiceManager {
  * @private
  */
 class PendingVoiceConnection extends EventEmitter {
-  constructor(voiceManager, channel) {
+  constructor(voiceManager, channel, options) {
     super();
+
+    this.options = options;
 
     /**
      * The ClientVoiceManager that instantiated this pending connection
@@ -253,7 +255,7 @@ class PendingVoiceConnection extends EventEmitter {
    * @returns {VoiceConnection}
    */
   upgrade() {
-    return new VoiceConnection(this);
+    return new VoiceConnection(this, this.options);
   }
 }
 

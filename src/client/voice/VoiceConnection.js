@@ -17,9 +17,10 @@ const fs = require('fs');
  * @extends {EventEmitter}
  */
 class VoiceConnection extends EventEmitter {
-
-  constructor(pendingConnection) {
+  constructor(pendingConnection, options) {
     super();
+
+    this.options = options || { shared: false };
     /**
      * The Voice Manager that instantiated this connection
      * @type {ClientVoiceManager}
@@ -55,26 +56,29 @@ class VoiceConnection extends EventEmitter {
      * The audio player for this voice connection
      * @type {AudioPlayer}
      */
-    this.player = new AudioPlayer(this);
 
-    this.player.on('debug', m => {
-      /**
-       * Debug info from the connection
-       * @event VoiceConnection#debug
-       * @param {string} message the debug message
-       */
-      this.emit('debug', `audio player - ${m}`);
-    });
+    if (!this.options.shared) {
+      this.player = new AudioPlayer(this);
 
-    this.player.on('error', e => {
-      /**
-       * Warning info from the connection
-       * @event VoiceConnection#warn
-       * @param {string|error} warning the warning
-       */
-      this.emit('warn', e);
-      this.player.cleanup();
-    });
+      this.player.on('debug', m => {
+        /**
+         * Debug info from the connection
+         * @event VoiceConnection#debug
+         * @param {string} message the debug message
+         */
+        this.emit('debug', `audio player - ${m}`);
+      });
+
+      this.player.on('error', e => {
+        /**
+         * Warning info from the connection
+         * @event VoiceConnection#warn
+         * @param {string|error} warning the warning
+         */
+        this.emit('warn', e);
+        this.player.cleanup();
+      });
+    }
 
     /**
      * Map SSRC to speaking values
@@ -241,6 +245,8 @@ class VoiceConnection extends EventEmitter {
    *  .catch(console.error);
    */
   playStream(stream, { seek = 0, volume = 1, passes = 1 } = {}) {
+    if (this.options.shared)
+      return;
     const options = { seek, volume, passes };
     return this.player.playUnknownStream(stream, options);
   }
@@ -258,6 +264,8 @@ class VoiceConnection extends EventEmitter {
    * @returns {StreamDispatcher}
    */
   playConvertedStream(stream, { seek = 0, volume = 1, passes = 1 } = {}) {
+    if (this.options.shared)
+      return;
     const options = { seek, volume, passes };
     return this.player.playPCMStream(stream, options);
   }

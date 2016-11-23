@@ -84,8 +84,8 @@ class VoiceChannel extends GuildChannel {
    *  .then(connection => console.log('Connected!'))
    *  .catch(console.error);
    */
-  join() {
-    return this.client.voice.joinChannel(this);
+  join(options) {
+    return this.client.voice.joinChannel(this, options);
   }
 
   /**
